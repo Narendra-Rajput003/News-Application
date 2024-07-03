@@ -6,7 +6,7 @@ import { z } from "zod";
 import jwt from "jsonwebtoken";
 import {EmailSender} from "../utils/mailSender.js"
 import logger from "../config/logger.js";
-
+import {loginSuccessEmail} from "../mail/templete/loginsuccess.js"
 
 
 const signUpSchema = z.object({
@@ -67,7 +67,7 @@ export const signUp = async (req, res) => {
         profileImage: uploadImageUrl.secure_url,
       },
     });
-
+   
     return successResponse(res, newUser, "User created successfully", 201);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -112,6 +112,20 @@ export const login = async (req, res) => {
     };
     res.cookie('token',token,options)
 
+     try {
+      const emailresponse =await EmailSender(
+        user.email,
+        "Successful Login Notification",
+        loginSuccessEmail(user.name)
+      );
+      console.log("successfully sent email",emailresponse)
+     } catch (error) {
+      logger.error({
+          type:"Email Error",
+          message:error.message,
+
+        })
+     }
 
 
     return successResponse(res,null,`Bearer ${token}`,200);
